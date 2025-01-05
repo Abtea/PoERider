@@ -3,18 +3,18 @@ import { defineConfig, externalizeDepsPlugin, bytecodePlugin } from 'electron-vi
 import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
-  main: {
-    plugins: [externalizeDepsPlugin(), bytecodePlugin()]
-  },
-  preload: {
-    plugins: [externalizeDepsPlugin(), bytecodePlugin()]
-  },
-  renderer: {
-    resolve: {
-      alias: {
-        '@renderer': resolve('src/renderer/src')
-      }
+    main: {
+        plugins: [externalizeDepsPlugin(), bytecodePlugin()],
     },
-    plugins: [vue()]
-  }
+    preload: {
+        plugins: [externalizeDepsPlugin(), bytecodePlugin()],
+    },
+    renderer: {
+        resolve: {
+            alias: {
+                '@renderer': resolve('src/renderer/src'),
+            },
+        },
+        plugins: [vue()],
+    },
 })

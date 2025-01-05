@@ -1,26 +1,45 @@
 <script setup lang="ts">
-import Versions from './components/Versions.vue'
+import { ref } from 'vue'
+import { processClipboardText } from './services/clipboardService'
 
-const ipcHandle = () => window.electron.ipcRenderer.send('ping')
+const clipboardText = ref('') // Raw clipboard text
+const statsFound = ref<Record<string, { value: number | [number, number]; type: string }>>({}) // Parsed stats
+const errorMessage = ref('') // Error message
+const payload = ref<object | null>(null) // Query payload
+
+// Process the clipboard text
+const handleClipboardProcessing = () => {
+    errorMessage.value = ''
+    statsFound.value = {}
+    payload.value = null
+
+    if (window.api && window.api.clipboard) {
+        clipboardText.value = window.api.clipboard.readText()
+
+        const result = processClipboardText(clipboardText.value)
+
+        if (result.error) {
+            errorMessage.value = result.error
+            console.error(errorMessage.value)
+        } else {
+            statsFound.value = result.stats
+            payload.value = result.payload
+            console.log('Generated Payload:', payload.value)
+
+            // Serialize payload to ensure compatibility with ipcRenderer
+            if (window.electron && payload.value) {
+                window.electron.ipcRenderer.send('open-trade-url', JSON.stringify(payload.value))
+            }
+        }
+    }
+}
 </script>
 
 <template>
-  <img alt="logo" class="logo" src="./assets/electron.svg" />
-  <div class="creator">Powered by electron-vite</div>
-  <div class="text">
-    Build an Electron app with
-    <span class="vue">Vue</span>
-    and
-    <span class="ts">TypeScript</span>
-  </div>
-  <p class="tip">Please try pressing <code>F12</code> to open the devTool</p>
-  <div class="actions">
-    <div class="action">
-      <a href="https://electron-vite.org/" target="_blank" rel="noreferrer">Documentation</a>
+    <div style="display: flex; flex-direction: column; align-items: center; margin-top: 50px">
+        <button @click="handleClipboardProcessing">Process Clipboard</button>
+
+        <!-- Error Message -->
+        <p v-if="errorMessage" style="color: red; margin-top: 10px">{{ errorMessage }}</p>
     </div>
-    <div class="action">
-      <a target="_blank" rel="noreferrer" @click="ipcHandle">Send IPC</a>
-    </div>
-  </div>
-  <Versions />
 </template>
